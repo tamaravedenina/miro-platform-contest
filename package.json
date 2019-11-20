@@ -1,0 +1,19 @@
+{
+  "name": "miro-platform-contest",
+  "version": "1.0.0",
+  "main": "main.js",
+  "repository": "https://github.com/tamaravedenina/miro-platform-contest",
+  "author": "Tamara Vedenina",
+  "license": "Copyright (C) Tamara Vedenina",
+  "private": true,
+  "scripts": {
+    "gen": "pegjs c4.pegjs",
+    "serve": "./node_modules/.bin/http-server -p 8081",
+    "ngrok": "./node_modules/.bin/ngrok http 8081"
+  },
+  "devDependencies": {
+    "http-server": "^0.11.1",
+    "ngrok": "^3.2.5",
+    "pegjs": "^0.10.0"
+  }
+}
