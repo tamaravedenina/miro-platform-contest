@@ -61,6 +61,10 @@ export const personCircleStyle = {
     shapeType: shipTypeCircle
 }
 
+
+
+
+
 export function createText(name, role, descripton) {
     return `<p><strong style="color:rgb(255,255,255)">${name}</strong></p><p>[${role}]</p><p><br/></p><p>${descripton}</p>`
 }
