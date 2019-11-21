@@ -1,6 +1,6 @@
 # miro-platform-contest
-Run http-server in dist folder: `http-server -p 8081`
+Install dependencies: `yarn`
 
-Run ngrok for https: `ngrok http 8081`
+Generate parser `yarn gen`
 
-Generate parser `pegjs c4.pegjs`
+Serve app `yarn serve`
