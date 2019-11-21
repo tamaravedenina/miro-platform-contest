@@ -15,70 +15,61 @@ let sy = constants.downStep
 
 let countSystem = 0
 let countPerson = 0
-let widgetIDs = []
-async function saveEditorData() {
-    if (editor.value.charAt(editor.value.length - 1) === '\n') {
-        let objects = parse(editor.value)
-        drawAll(objects)
-    }
-}
+let widgetsMap = {}
+
 
 function redraw() {
     cleanUp()
+    let objects = parse(editor.value)
+    for (const element of objects) {
+        switch (element.type) {
+            case constants.personType:
+                drawPerson(element.name, "Person", element.description, element.variable).then()
+                break
+
+            case constants.softwareSystemType:
+                drawSystem(element.name, "Software System", element.description, element.variable).then()
+                break
+
+            case constants.existingSoftwareSystemType:
+                drawExistingSystem(element.name, "Existing Software System", element.description, element.variable).then()
+                break
+
+            case constants.relationship:
+
+                drawRelationship(element.description, element.start, element.end).then()
+                break
+
+            case constants.enterpriseBoundary:
+                // role = "Enterprise Boundary"
+                break
+
+            default:
+                break
+        }
+    }
+}
+
+function cleanUp() {
     prx = 0
     pry = 0
     pcx = 0
     pcy = -90
     sx = 0
     sy = constants.downStep
-    let objects = parse(editor.value)
-    drawAll(objects)
-}
-
-function cleanUp() {
-    for (const id of widgetIDs) {
-        miro.board.widgets.deleteById(id).then()
+    for (const key in widgetsMap) {
+        for (const id of widgetsMap[key]) {
+            miro.board.widgets.deleteById(id).then()
+        }
     }
-    widgetIDs = []
+    widgetsMap = {}
 }
 
 // после закрытия сайдбара координаты обнуляются
-function drawAll(objects) {
-    for (const element of objects) {
-        console.log(element)
-        drawObject(element.name, element.type, element.description)
-    }
-}
+// попробовать узнавать перед отрисовкой, занято ли планируемое для отрисовки и на сколько
+// добавить обработку ошибок, подумать над их выводом
 
-function drawObject(name, type, description) {
-    switch (type) {
-        case constants.personType:
-            drawPerson(name, "Person", description).then()
-            break
-
-        case constants.softwareSystemType:
-            drawSystem(name, "Software System", description).then()
-            break
-
-        case constants.existingSoftwareSystemType:
-            drawExistingSystem(name, "Existing Software System", description).then()
-            break
-
-        case constants.relationship:
-            // role = "Relationship"
-            break
-
-        case constants.enterpriseBoundary:
-            // role = "Enterprise Boundary"
-            break
-
-        default:
-            break
-    }
-
-}
-
-async function drawPerson(name, role, description) {
+async function drawPerson(name, role, description, variableName) {
     countPerson = countPerson + 1
     if (countPerson !== 1) {
         prx = calcX(prx, countPerson)
@@ -104,8 +95,7 @@ async function drawPerson(name, role, description) {
         y: pcy
     }))[0]
 
-    widgetIDs.push(personRectangle.id)
-    widgetIDs.push(personCircle.id)
+    widgetsMap[variableName] = [personRectangle.id, personCircle.id]
 
     if (countPerson % constants.maxOneLineObjectsCount === 0) {
         countPerson = 0
@@ -116,7 +106,7 @@ async function drawPerson(name, role, description) {
     }
 }
 
-async function drawSystem(name, role, description) {
+async function drawSystem(name, role, description, variableName) {
     countSystem = countSystem + 1
     if (countSystem !== 1) {
         sx = calcX(sx, countSystem)
@@ -131,7 +121,7 @@ async function drawSystem(name, role, description) {
         width: constants.systemRectangleWidth,
         height: constants.systemRectangleHeight
     }))[0]
-    widgetIDs.push(systemRectangle.id)
+    widgetsMap[variableName] = [systemRectangle.id]
 
     if (countSystem % constants.maxOneLineObjectsCount === 0) {
         countSystem = 0
@@ -140,7 +130,9 @@ async function drawSystem(name, role, description) {
     }
 }
 
-async function drawExistingSystem(name, role, description) {
+// вынести в отдельную функцию формирование прямоугольничка
+// а может и всех фигур
+async function drawExistingSystem(name, role, description, variableName) {
     countSystem = countSystem + 1
     if (countSystem === 2) {
         sx = calcX(sx, countSystem)
@@ -155,14 +147,38 @@ async function drawExistingSystem(name, role, description) {
         width: constants.systemRectangleWidth,
         height: constants.systemRectangleHeight
     }))[0]
-
-    widgetIDs.push(systemRectangle.id)
+    widgetsMap[variableName] = [systemRectangle.id]
 
     if (countSystem % constants.maxOneLineObjectsCount === 0) {
         countSystem = 0
         sx = 0
         sy = sy + constants.downStep
     }
+}
+
+async function drawRelationship(description, start, end) {
+    // let startID = widgetsMap[start][0]
+    // let endID = widgetsMap[end][0]
+    let line = {
+        endWidgetId: 0,
+        startWidgetId: 0,
+        captions: [{description}],
+        style: {
+            lineColor: "#808080",
+            lineEndStyle: 1,
+            lineStartStyle: 0,
+            lineStyle: 1,
+            lineThickness: 1,
+            lineType: 0
+        },
+        type: "LINE"
+    }
+    console.log(widgetsMap)
+    console.log(line)
+    console.log(start)
+    console.log(end)
+    // let relationship = (await miro.board.widgets.create(line))[0]
+    // widgetsMap[relationship.id] = [relationship.id]
 }
 
 function calcX(x, count) {
