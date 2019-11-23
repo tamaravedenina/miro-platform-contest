@@ -40,7 +40,6 @@ export const existingSystemRectangleStyle = {
   fontFamily: 10,
 }
 
-
 export const personType = 1
 export const softwareSystemType = 2
 export const existingSoftwareSystemType = 3
@@ -62,7 +61,6 @@ export const personCircleStyle = {
   borderColor: personBorderColor,
   shapeType: shipTypeCircle,
 }
-
 
 export function createText(name, role, descripton) {
   return `<p><strong style="color:rgb(255,255,255)">${name}</strong></p><p>[${role}]</p><p><br/></p><p>${descripton}</p>`
