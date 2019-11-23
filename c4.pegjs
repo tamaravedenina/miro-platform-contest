@@ -2,23 +2,46 @@ text
   = test:template* { return test; }
 
 template
-  = shape_template
+  = system_template
+  / person_template
   / relationship_template
-  / enterprise_boundary_template
+  / boundary_template
+  / component_or_component_template
 
-shape_template
-  = chars:variable_chart+ equal role:shape start_params name:string comma description:string end_params end_object { return {"type": role, "name": name, "description": description, "variable": chars.join("")}; }
+boundary_template
+  = object_type:boundary begin_params name:string comma type:string end_params begin_boundary systems:boundary_param* end_boundary
+  { return {"object_type": object_type, "name": name, "type": type, "systems": systems}; }
 
-shape
-  = person
-  / software_system
-  / existing_software_system
+boundary_param
+  = system_template
+  / component_or_component_template
+  / boundary_template
+
+person_template
+  = chars:variable_chart+ equal object_type:person begin_params name:string comma description:string end_params end_object
+  { return {"object_type": object_type, "name": name, "description": description, "variable": chars.join("")}; }
+
+system_template
+  = chars:variable_chart+ equal object_type:system begin_params name:string comma description:string end_params end_object
+  { return {"object_type": object_type, "name": name, "description": description, "variable": chars.join("")}; }
 
 relationship_template
-  = role:relationship start_params start_variable:variable_chart+ comma end_variable:variable_chart+ comma description:string end_params end_object { return {"type": role, "description": description, "start": start_variable.join(""), "end": end_variable.join("")}; }
+  = object_type:relationshipType begin_params start_variable:variable_chart+ comma end_variable:variable_chart+ comma description:string technology:optional_arg? end_params end_object
+  { return {"object_type": object_type, "description": description, "technology": technology, "start": start_variable.join(""), "end": end_variable.join("")}; }
 
-enterprise_boundary_template
-  = role:enterprise_boundary start_params name:string comma description:string end_params end_object { return {"type": role, "name": name, "description": description, "variable": chars.join("")}; }
+component_or_component_template
+  = chars:variable_chart+ equal object_type:component_or_component begin_params name:string comma description:string comma technology:string end_params end_object { return {"object_type": object_type, "name": name, "description": description, "technology": technology, "variable": chars.join("")}; }
+
+optional_arg
+  = comma arg:string { return arg; }
+
+system
+  = software_system
+  / existing_software_system
+
+component_or_component
+  = container
+  / component
 
 bool
   = false
@@ -34,16 +57,22 @@ person
   = "Person"i { return 1; }
 
 software_system
-  = "SoftwareSystem"i { return 2; }
+  = "System"i { return 2; }
 
 existing_software_system
-  = "ExistingSoftwareSystem"i { return 3; }
+  = "ExistingSystem"i { return 3; }
 
-relationship
+relationshipType
   = "Relationship"i { return 4; }
 
-enterprise_boundary
-  = "EnterpriseBoundary"i { return 5; }
+boundary
+  = "Boundary"i { return 5; }
+
+container
+  = "Container"i { return 6; }
+
+component
+  = "Component"i { return 7; }
 
 string "string"
   = quotation_mark chars:unescaped* quotation_mark { return chars.join(""); }
@@ -62,7 +91,7 @@ all_letters
 quotation_mark
   = '"'
 
-start_params
+begin_params
   = ws '(' ws
 
 end_params
@@ -76,5 +105,11 @@ equal
 
 end_object
   = ws ";" ws
+
+begin_boundary
+  = ws "{" ws
+
+end_boundary
+  = ws "}" ws
 
 ws "whitespace" = [ \t\n\r]*
