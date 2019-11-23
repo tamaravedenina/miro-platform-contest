@@ -2,7 +2,7 @@ export const acrossStep = 300
 export const downStep = 250
 
 export const maxOneLineObjectsCount = 5
-
+// TODO большинство констант уже есть в miro
 export const shipTypeCircle = 4
 export const shipTypeRoundedRectangle = 7
 export const shipTypeRectangle = 3
@@ -10,14 +10,14 @@ export const personBackgroundColor = '#2a4897'
 export const personTextColor = '#ffffff'
 export const personBorderColor = '#1a3993'
 export const personRectangleWidth = 190
-export const personRectangleHeight = 115
+export const personRectangleHeight = 116
 export const personCircleDiameter = 80
 
 export const systemBackgroundColor = '#1f6daa'
 export const systemBorderColor = '#11568e'
 export const systemTextColor = '#ffffff'
 export const systemRectangleWidth = 200
-export const systemRectangleHeight = 135
+export const systemRectangleHeight = 136
 export const systemRectangleStyle = {
   backgroundColor: systemBackgroundColor,
   borderColor: systemBorderColor,
@@ -44,8 +44,10 @@ export const existingSystemRectangleStyle = {
 export const personType = 1
 export const softwareSystemType = 2
 export const existingSoftwareSystemType = 3
-export const relationship = 4
-export const enterpriseBoundary = 5
+export const relationshipType = 4
+export const enterpriseBoundaryType = 5
+export const containerType = 6
+export const componentType = 7
 
 export const personRectangleStyle = {
   backgroundColor: personBackgroundColor,
