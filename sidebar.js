@@ -1,4 +1,4 @@
-import { peg$parse as parse } from './c4.js'
+import {peg$parse as parse} from './c4.js'
 import * as constants from './constants.js'
 
 let editor = document.querySelector('.editor')
@@ -17,11 +17,21 @@ let countSystem = 0
 let countPerson = 0
 let widgetsMap = {}
 
-
 function redraw() {
   cleanUp()
-  let objects = parse(editor.value)
-  console.log(objects)
+  try {
+    let objects = parse(editor.value)
+    setTimeout(drawAll, 500, objects)
+  } catch (e) {
+    if (e.name === 'SyntaxError') {
+      miro.showNotification(e.message)
+    } else {
+      miro.showNotification("Undefined Error")
+    }
+  }
+}
+
+function drawAll(objects) {
   for (const element of objects) {
     switch (element.object_type) {
       case constants.personType:
@@ -37,11 +47,12 @@ function redraw() {
         break
 
       case constants.relationshipType:
-        drawRelationship(element.description, element.start, element.end)
+        setTimeout(drawRelationship, 500, element.description, element.technology, element.start, element.end)
+        // drawRelationship()
         break
 
       case constants.enterpriseBoundaryType:
-        drawBoundary(element.name, element.type, element.systems.length)
+        drawBoundary(element.name, element.type, element.systems)
         break
 
       case constants.containerType:
@@ -112,11 +123,6 @@ function drawPerson(name, role, description, variableName) {
     widgetsMap[variableName].push(personCircle.id)
   })
 
-
-//     обработка ошибок
-//     miro.showNotification("test")
-
-
   if (countPerson % constants.maxOneLineObjectsCount === 0) {
     countPerson = 0
     prx = 0
@@ -181,38 +187,35 @@ function drawExistingSystem(name, role, description, variableName) {
   }
 }
 
-// technology! а не description
-function drawRelationship(description, start, end) {
-  // let startID = widgetsMap[start][0]
-  // let endID = widgetsMap[end][0]
-  // let line = {
-  //     endWidgetId: endID,
-  //     startWidgetId: startID,
-  //     // text не поддерживается в API :(
-  //     // captions: [{"text": description}],
-  //     style: {
-  //         lineColor: "#808080",
-  //         lineEndStyle: 1,
-  //         lineStartStyle: 0,
-  //         lineStyle: 1,
-  //         lineThickness: 1,
-  //         lineType: 0
-  //     },
-  //     type: "LINE"
-  // }
-  console.log(widgetsMap)
-  console.log(start)
-  // let relationshipType = (await
-  // miro.board.widgets.create(line).then((shape) => {
-  //     let relationship = shape[0]
-  //     widgetsMap[relationship.id] = [relationship.id]
-  // })
-  // widgetsMap[relationshipType.id] = [relationshipType.id]
+function drawRelationship(description, technology, start, end) {
+  let startID = widgetsMap[start][0]
+  let endID = widgetsMap[end][0]
+  let line = {
+    endWidgetId: endID,
+    startWidgetId: startID,
+    // text не поддерживается в API :(
+    // captions: [{"text": description}],
+    style: {
+      lineColor: "#808080",
+      lineEndStyle: 1,
+      lineStartStyle: 0,
+      lineStyle: 1,
+      lineThickness: 1,
+      lineType: 0
+    },
+    type: "LINE"
+  }
+
+  miro.board.widgets.create(line).then((shape) => {
+    let relationship = shape[0]
+    widgetsMap[relationship.id] = [relationship.id]
+  })
 }
 
-function drawBoundary(name, type, countSystems) {
-  let down = calcBoundaryDown(countSystems)
-  let across = calcBoundaryAcross(countSystems)
+function drawBoundary(name, type, systems) {
+  drawAll(systems)
+  let down = calcBoundaryDown(systems.length)
+  let across = calcBoundaryAcross(systems.length)
   let y = calcBoundaryY(down)
   let style = {
     backgroundColor: 'transparent',
