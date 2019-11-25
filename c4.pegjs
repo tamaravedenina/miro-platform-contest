@@ -42,6 +42,7 @@ system
 component_or_component
   = container
   / component
+  / database
 
 bool
   = false
@@ -73,6 +74,9 @@ container
 
 component
   = "Component"i { return 7; }
+
+database
+  = "Database"i { return 8; }
 
 string "string"
   = quotation_mark chars:unescaped* quotation_mark { return chars.join(""); }

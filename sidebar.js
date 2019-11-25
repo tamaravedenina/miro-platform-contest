@@ -1,5 +1,5 @@
 import {peg$parse as parse} from './c4.js'
-import * as constants from './constants.js'
+import * as consts from './constants.js'
 
 let editor = document.querySelector('.editor')
 let reloadBtn = document.querySelector('#reload-btn')
@@ -11,9 +11,10 @@ let pcx = 0
 let pcy = -90
 
 let sx = 0
-let sy = constants.downStep
+let sy = consts.downStep
 
 let countSystem = 0
+let countDatabase = 0
 let countPerson = 0
 let widgetsMap = {}
 
@@ -21,6 +22,7 @@ function redraw() {
   cleanUp()
   try {
     let objects = parse(editor.value)
+    // ждем, когда удалятся все виджеты
     setTimeout(drawAll, 500, objects)
   } catch (e) {
     if (e.name === 'SyntaxError') {
@@ -34,33 +36,39 @@ function redraw() {
 function drawAll(objects) {
   for (const element of objects) {
     switch (element.object_type) {
-      case constants.personType:
+      case consts.personType:
         drawPerson(element.name, 'Person', element.description, element.variable)
         break
 
-      case constants.softwareSystemType:
-        drawSystem(element.name, 'Software System', element.description, element.variable)
+      case consts.softwareSystemType:
+        drawContainer(element.name, 'Software System', element.description, element.variable, false)
         break
 
-      case constants.existingSoftwareSystemType:
-        drawExistingSystem(element.name, 'Existing Software System', element.description, element.variable)
+      case consts.existingSoftwareSystemType:
+        drawContainer(element.name, 'Existing Software System', element.description, element.variable, true)
         break
 
-      case constants.relationshipType:
-        setTimeout(drawRelationship, 500, element.description, element.technology, element.start, element.end)
-        // drawRelationship()
+      case consts.relationshipType:
+        setTimeout(drawRelationship, 700, element.description, element.technology, element.start, element.end)
         break
 
-      case constants.enterpriseBoundaryType:
+      case consts.enterpriseBoundaryType:
         drawBoundary(element.name, element.type, element.systems)
         break
 
-      case constants.containerType:
-        drawSystem(element.name, 'Container: ' + element.technology, element.description, element.variable)
+      case consts.containerType:
+        drawContainer(element.name, 'Container: ' + element.technology, element.description, element.variable, false)
         break
-      case constants.componentType:
-        drawSystem(element.name, 'Component: ' + element.technology, element.description, element.variable)
+
+      case consts.componentType:
+        drawContainer(element.name, 'Component: ' + element.technology, element.description, element.variable, false)
         break
+
+      case consts.databaseType:
+        console.log(element)
+        drawDatabase(element.name, 'Container: ' + element.technology, element.description, element.variable)
+        break
+
       default:
         break
     }
@@ -73,9 +81,10 @@ function cleanUp() {
   pcx = 0
   pcy = -90
   sx = 0
-  sy = constants.downStep
+  sy = consts.downStep
   countSystem = 0
   countPerson = 0
+  countDatabase = 0
   for (const key in widgetsMap) {
     for (const id of widgetsMap[key]) {
       miro.board.widgets.deleteById(id)
@@ -84,10 +93,6 @@ function cleanUp() {
   widgetsMap = {}
 }
 
-// после закрытия сайдбара координаты обнуляются
-// попробовать узнавать перед отрисовкой, занято ли планируемое для отрисовки и на сколько
-// добавить обработку ошибок, подумать над их выводом
-
 function drawPerson(name, role, description, variableName) {
   countPerson = countPerson + 1
   if (countPerson !== 1) {
@@ -95,95 +100,57 @@ function drawPerson(name, role, description, variableName) {
     pcx = calcX(pcx, countPerson)
   }
 
-  miro.board.widgets.create({
-    type: 'shape',
-    text: constants.createText(name, role, description),
-    x: prx,
-    y: pry,
-    style: constants.personRectangleStyle,
-    width: constants.personRectangleWidth,
-    height: constants.personRectangleHeight,
-  }).then((shape) => {
+  let text = consts.createText(name, role, description)
+  let shape = consts.newShape(consts.shapeTypeRoundedRectangle, text, consts.personBackgroundColor,
+    consts.personBorderColor, consts.shapeTextColor, prx, pry, consts.personRectangleWidth, consts.personRectangleHeight)
+
+  miro.board.widgets.create(shape).then((shape) => {
     let personRectangle = shape[0]
     miro.board.viewport.zoomToObject(personRectangle)
     miro.board.viewport.setZoom(0.6)
     widgetsMap[variableName] = [personRectangle.id]
   })
 
-  miro.board.widgets.create({
-    type: 'shape',
-    text: '',
-    style: constants.personCircleStyle,
-    width: constants.personCircleDiameter,
-    height: constants.personCircleDiameter,
-    x: pcx,
-    y: pcy,
-  }).then((shape) => {
+  shape = consts.newShape(consts.shapeTypeCircle, '', consts.personBackgroundColor,
+    consts.personBorderColor, consts.shapeTextColor, pcx, pcy, consts.personCircleDiameter, consts.personCircleDiameter)
+  miro.board.widgets.create(shape).then((shape) => {
     let personCircle = shape[0]
     widgetsMap[variableName].push(personCircle.id)
   })
 
-  if (countPerson % constants.maxOneLineObjectsCount === 0) {
+  if (countPerson % consts.maxOneLineObjectsCount === 0) {
     countPerson = 0
     prx = 0
     pcx = 0
-    pry = pry + constants.downStep
-    pcy = pcy + constants.downStep
+    pry = pry + consts.downStep
+    pcy = pcy + consts.downStep
   }
 }
 
-function drawSystem(name, role, description, variableName) {
+function drawContainer(name, role, description, variableName, isExist) {
   countSystem = countSystem + 1
   if (countSystem !== 1) {
     sx = calcX(sx, countSystem)
   }
+  let backgroundColor = consts.containerColor
+  let borderColor = consts.containerBorderColor
+  if (isExist === true) {
+    backgroundColor = consts.existingSystemBackgroundColor
+    borderColor = consts.existingSystemBorderColor
+  }
 
-  miro.board.widgets.create({
-    type: 'shape',
-    text: constants.createText(name, role, description),
-    x: sx,
-    y: sy,
-    style: constants.systemRectangleStyle,
-    width: constants.systemRectangleWidth,
-    height: constants.systemRectangleHeight,
-  }).then((shape) => {
+  let text = consts.createText(name, role, description)
+  let system = consts.newShape(consts.shapeTypeRectangle, text, backgroundColor, borderColor, consts.shapeTextColor, sx, sy, consts.containerWidth, consts.containerHeight)
+
+  miro.board.widgets.create(system).then((shape) => {
     let systemRectangle = shape[0]
     widgetsMap[variableName] = [systemRectangle.id]
   })
 
-
-  if (countSystem % constants.maxOneLineObjectsCount === 0) {
+  if (countSystem % consts.maxOneLineObjectsCount === 0) {
     countSystem = 0
     sx = 0
-    sy = sy + constants.downStep
-  }
-}
-
-// вынести в отдельную функцию формирование прямоугольничка
-// а может и всех фигур
-function drawExistingSystem(name, role, description, variableName) {
-  countSystem = countSystem + 1
-  if (countSystem === 2) {
-    sx = calcX(sx, countSystem)
-  }
-
-  miro.board.widgets.create({
-    type: 'shape',
-    text: constants.createText(name, role, description),
-    x: sx,
-    y: sy,
-    style: constants.existingSystemRectangleStyle,
-    width: constants.systemRectangleWidth,
-    height: constants.systemRectangleHeight,
-  }).then((shape) => {
-    let systemRectangle = shape[0]
-    widgetsMap[variableName] = [systemRectangle.id]
-  })
-
-  if (countSystem % constants.maxOneLineObjectsCount === 0) {
-    countSystem = 0
-    sx = 0
-    sy = sy + constants.downStep
+    sy = sy + consts.downStep
   }
 }
 
@@ -220,19 +187,17 @@ function drawBoundary(name, type, systems) {
   let style = {
     backgroundColor: 'transparent',
     backgroundOpacity: 1,
-    bold: 0,
-    borderColor: '#808080',
+    borderColor: consts.boundaryColor,
     borderOpacity: 1,
     borderStyle: 1,
     borderWidth: 1,
-    fontFamily: 10,
-    fontSize: 18,
-    shapeType: 3,
+    fontFamily: consts.fontFamily,
+    fontSize: consts.fontSize,
+    shapeType: consts.shapeTypeRectangle,
     textAlign: 'l',
     textAlignVertical: 'b',
-    textColor: '#1a1a1a',
+    textColor: consts.boundaryTextColor,
   }
-
 
   miro.board.widgets.create({
     type: 'shape',
@@ -246,30 +211,43 @@ function drawBoundary(name, type, systems) {
     let boundary = shape[0]
     widgetsMap[boundary] = [boundary.id]
   })
+}
 
+function drawDatabase(name, role, description, variableName) {
+  let x = countDatabase * consts.acrossStep
+  let y = sy + consts.downStep
+  let text = consts.createText(name, role, description)
+  let shape = consts.newShape(consts.shapeTypeCylinder, text, consts.containerColor, consts.containerBorderColor,
+    consts.shapeTextColor, x, y, consts.containerWidth, consts.databaseHeight)
+
+  miro.board.widgets.create(shape).then((result) => {
+    let database = result[0]
+    widgetsMap[variableName] = [database.id]
+    countDatabase = countDatabase + 1
+  })
 }
 
 function calcBoundaryDown(count) {
-  let countDown = (~~(count / constants.maxOneLineObjectsCount)) + 1
-  return countDown * constants.systemRectangleHeight + (countDown - 1) * (constants.downStep - constants.systemRectangleHeight) + 3 * 50
+  let countDown = (~~(count / consts.maxOneLineObjectsCount)) + 1
+  return countDown * consts.containerHeight + (countDown - 1) * (consts.downStep - consts.containerHeight) + 3 * 50
 }
 
 function calcBoundaryAcross(count) {
-  if (count >= constants.maxOneLineObjectsCount) {
-    return constants.maxOneLineObjectsCount * constants.systemRectangleWidth +
-      (constants.maxOneLineObjectsCount - 1) * (constants.acrossStep - constants.systemRectangleWidth) + 2 * 50
+  if (count >= consts.maxOneLineObjectsCount) {
+    return consts.maxOneLineObjectsCount * consts.containerWidth +
+      (consts.maxOneLineObjectsCount - 1) * (consts.acrossStep - consts.containerWidth) + 2 * 50
   }
-  return count * constants.systemRectangleWidth + (count - 1) * (constants.acrossStep - constants.systemRectangleWidth) + 2 * 50
+  return count * consts.containerWidth + (count - 1) * (consts.acrossStep - consts.containerWidth) + 2 * 50
 }
 
 function calcBoundaryY(down) {
-  return constants.downStep - 50 - constants.systemRectangleHeight / 2 + down / 2
+  return consts.downStep - 50 - consts.containerHeight / 2 + down / 2
 }
 
 function calcX(x, count) {
   if (count % 2 === 0) {
-    return x + constants.acrossStep * (count - 1)
+    return x + consts.acrossStep * (count - 1)
   } else {
-    return x - constants.acrossStep * (count - 1)
+    return x - consts.acrossStep * (count - 1)
   }
 }
