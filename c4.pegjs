@@ -64,7 +64,7 @@ existing_software_system
   = "ExistingSystem"i { return 3; }
 
 relationshipType
-  = "Relationship"i { return 4; }
+  = "Rel"i { return 4; }
 
 boundary
   = "Boundary"i { return 5; }
