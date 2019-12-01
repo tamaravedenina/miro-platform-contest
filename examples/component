@@ -1,0 +1,40 @@
+person = Person("Clinic", "Employee");
+
+Boundary("Web Application", "Container") {
+comp1 = Component("VetController", "", "Spring MVC Controller");
+comp2 = Component("VisitController", "", "Spring MVC Controller");
+comp3 = Component("PetController", "", "Spring MVC Controller");
+comp4 = Component("OwnerController", "Controller used to showcase what happens when an exception is thrown.", "Spring MVC Controller");
+comp5 = Component("CrashController", "", "Spring MVC Controller");
+comp6 = Component("ClinicService", "Mostly used as a facade so all controllers have a single point of entry.", "Spring Service");
+comp7 = Component("VetRepository", "Repository class for Vet domain object. All method names are compliant with Spring Data naming conventions.", "Spring Repository");
+comp8 = Component("VisitRepositor","Repository class for Visit domain object. All method names are compliant with Spring Data naming conventions.", "Spring Repository");
+comp9 = Component("PetRepositor", "Repository class for Pet domain object. All method names are compliant with Spring Data naming conventions.", "Spring Repository");
+comp10 = Component("OwnerRepositor", "Repository class for Owner domain object. All method names are compliant with Spring Data naming conventions.", "Spring Repository");
+}
+db = Database("Database", "Stores information regarding the veterinarians, the clients, and their pets.", "Relation Database Schema");
+
+Rel(person, comp1, "Uses", "HTTP");
+Rel(person, comp2, "Uses", "HTTP");
+Rel(person, comp3, "Uses", "HTTP");
+Rel(person, comp4, "Uses", "HTTP");
+Rel(person, comp5, "Uses", "HTTP");
+
+Rel(comp1, comp6, "Uses");
+Rel(comp2, comp6, "Uses");
+Rel(comp3, comp6, "Uses");
+Rel(comp4, comp6, "Uses");
+Rel(comp5, comp6, "Uses");
+
+Rel(comp6, comp7, "Uses");
+Rel(comp6, comp8, "Uses");
+Rel(comp6, comp9, "Uses");
+Rel(comp6, comp10, "Uses");
+
+Rel(comp9, comp8, "Uses");
+Rel(comp9, comp10, "Uses");
+
+Rel(comp7, db,"Read from and writes to", "JDBC");
+Rel(comp8, db, "Read from and writes to", "JDBC");
+Rel(comp9, db, "Read from and writes to", "JDBC");
+Rel(comp10, db,"Read from and writes to", "JDBC");

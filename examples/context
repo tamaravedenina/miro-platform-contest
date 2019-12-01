@@ -1,0 +1,13 @@
+per = Person("Personal Banking Customer", "A customer of the bank, with personal bank accounts.");
+
+Boundary("Big Bank plc", "Enterprise") {
+
+soft1 = System("Internal Banking System", "Allow customers to view information about their bank accounts, and make payments.");
+soft3 = ExistingSystem("Mainframe Banking System", "Stores all of the core banking information about customers, accounts, transactions, etc.");
+soft2 = ExistingSystem("Email System", "The internal Microsoft Exchange e-mail system.");
+}
+
+Rel(per, soft1, "Uses");
+Rel(soft1, soft3, "Uses");
+Rel(soft1, soft2, "Sends e-mail using");
+Rel(soft2, per, " Sends e-mail to");
