@@ -1,5 +1,5 @@
 text
-  = test:template* { return test; }
+  = ws test:template* { return test; }
 
 template
   = system_template

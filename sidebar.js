@@ -1,7 +1,8 @@
 import {peg$parse as parse} from './c4.js'
-import * as consts from './constants.js'
+import * as shapes from './shapes.js'
 
 let editor = document.querySelector('.editor')
+editor.value = shapes.startText
 let reloadBtn = document.querySelector('#reload-btn')
 reloadBtn.addEventListener('click', redraw)
 
@@ -9,40 +10,44 @@ let widgetsMap = {}
 
 function redraw() {
   cleanUp()
-  let objects = parse(editor.value)
-  let graph = consts.createGraph(objects, 0, 0)
-  miro.board.viewport.setZoom(0.4)
-  drawAllObjects(graph.vertices)
-  if (graph.boundary !== null) {
-    drawBoundary(graph.boundary.object.name, graph.boundary.object.type, graph.boundary.x, graph.boundary.y, graph.boundary.width, graph.boundary.height)
+  try {
+    let objects = parse(editor.value)
+    let graph = shapes.createGraph(objects, 0, 0)
+    miro.board.viewport.setZoom(0.4)
+    drawAllObjects(graph.vertices)
+    if (graph.boundary !== null) {
+      drawBoundary(graph.boundary.object.name, graph.boundary.object.type, graph.boundary.x, graph.boundary.y, graph.boundary.width, graph.boundary.height)
+    }
+    setTimeout(drawRelationships, 1000, graph.edges)
+  } catch (e) {
+    miro.showErrorNotification(e.message)
   }
-  setTimeout(drawRelationships, 3000, graph.edges)
 }
 
 function drawAllObjects(objects) {
   for (const element of objects) {
     switch (element.object.object_type) {
-      case consts.personType:
+      case shapes.personType:
         drawPerson(element.object.name, 'Person', element.object.description, element.object.variable, element.x, element.y, element.number)
         break
 
-      case consts.softwareSystemType:
+      case shapes.softwareSystemType:
         drawContainer(element.object.name, 'Software System', element.object.description, element.object.variable, element.x, element.y, element.number)
         break
 
-      case consts.existingSoftwareSystemType:
+      case shapes.existingSoftwareSystemType:
         drawContainer(element.object.name, 'Existing Software System', element.object.description, element.object.variable, element.x, element.y, element.number, true)
         break
 
-      case consts.containerType:
+      case shapes.containerType:
         drawContainer(element.object.name, 'Container: ' + element.object.technology, element.object.description, element.object.variable, element.x, element.y, element.number)
         break
 
-      case consts.componentType:
+      case shapes.componentType:
         drawContainer(element.object.name, 'Component: ' + element.object.technology, element.object.description, element.object.variable, element.x, element.y, element.number)
         break
 
-      case consts.databaseType:
+      case shapes.databaseType:
         drawDatabase(element.object.name, 'Container: ' + element.object.technology, element.object.description, element.object.variable, element.x, element.y, element.number)
         break
 
@@ -62,17 +67,16 @@ function cleanUp() {
 }
 
 function drawPerson(name, role, description, variableName, x, y, number) {
-  let text = consts.createText(name, role, description)
-  let shape = consts.newShape(consts.shapeTypeRoundedRectangle, text, consts.personBackgroundColor,
-    consts.personBorderColor, consts.shapeTextColor, x, y, consts.personRectangleWidth, consts.personRectangleHeight)
+  let text = shapes.createText(name, role, description)
+  let shape = shapes.newShape(shapes.shapeTypeRoundedRectangle, text, shapes.personBackgroundColor,
+    shapes.personBorderColor, shapes.shapeTextColor, x, y, shapes.personRectangleWidth, shapes.personRectangleHeight)
 
   miro.board.widgets.create(shape).then((shape) => {
     let personRectangle = shape[0]
     widgetsMap[number] = [personRectangle.id]
   })
-
-  shape = consts.newShape(consts.shapeTypeCircle, '', consts.personBackgroundColor,
-    consts.personBorderColor, consts.shapeTextColor, x, y - 90, consts.personCircleDiameter, consts.personCircleDiameter)
+  shape = shapes.newShape(shapes.shapeTypeCircle, '', shapes.personBackgroundColor,
+    shapes.personBorderColor, shapes.shapeTextColor, x, y - 90, shapes.personCircleDiameter, shapes.personCircleDiameter)
   miro.board.widgets.create(shape).then((shape) => {
     let personCircle = shape[0]
     widgetsMap[number].push(personCircle.id)
@@ -80,16 +84,16 @@ function drawPerson(name, role, description, variableName, x, y, number) {
 }
 
 function drawContainer(name, role, description, variableName, x, y, number, isExist = false) {
-  let backgroundColor = consts.containerColor
-  let borderColor = consts.containerBorderColor
+  let backgroundColor = shapes.containerColor
+  let borderColor = shapes.containerBorderColor
   if (isExist === true) {
-    backgroundColor = consts.existingSystemBackgroundColor
-    borderColor = consts.existingSystemBorderColor
+    backgroundColor = shapes.existingSystemBackgroundColor
+    borderColor = shapes.existingSystemBorderColor
   }
 
-  let text = consts.createText(name, role, description)
-  let system = consts.newShape(consts.shapeTypeRectangle, text, backgroundColor, borderColor, consts.shapeTextColor,
-    x, y, consts.containerWidth, consts.containerHeight)
+  let text = shapes.createText(name, role, description)
+  let system = shapes.newShape(shapes.shapeTypeRectangle, text, backgroundColor, borderColor, shapes.shapeTextColor,
+    x, y, shapes.containerWidth, shapes.containerHeight)
 
   miro.board.widgets.create(system).then((shape) => {
     let systemRectangle = shape[0]
@@ -100,14 +104,17 @@ function drawContainer(name, role, description, variableName, x, y, number, isEx
 function drawRelationships(edges) {
   for (let i = 0; i < edges.length; i++) {
     for (let j = 0; j < edges[i].length; j++) {
-      if (edges[i][j]) {
+      if (edges[i][j].relation) {
         let startID = widgetsMap[i][0]
         let endID = widgetsMap[j][0]
+        let text = edges[i][j].object.description
+        if (edges[i][j].object.technology !== null) {
+          text += `\n[${edges[i][j].object.technology}]`
+        }
         let line = {
           endWidgetId: endID,
           startWidgetId: startID,
-          // text не поддерживается в API :(
-          // captions: [{"text": description}],
+          // text: text,
           style: {
             lineColor: "#808080",
             lineEndStyle: 1,
@@ -126,44 +133,22 @@ function drawRelationships(edges) {
       }
     }
   }
-  // let startID = widgetsMap[start][0]
-  // let endID = widgetsMap[end][0]
-  // let line = {
-  //   endWidgetId: endID,
-  //   startWidgetId: startID,
-  //   // text не поддерживается в API :(
-  //   // captions: [{"text": description}],
-  //   style: {
-  //     lineColor: "#808080",
-  //     lineEndStyle: 1,
-  //     lineStartStyle: 0,
-  //     lineStyle: 1,
-  //     lineThickness: 1,
-  //     lineType: 0
-  //   },
-  //   type: "LINE"
-  // }
-  //
-  // miro.board.widgets.create(line).then((shape) => {
-  //   let relationship = shape[0]
-  //   widgetsMap[relationship.id] = [relationship.id]
-  // })
 }
 
 function drawBoundary(name, type, x, y, w, h) {
   let style = {
     backgroundColor: 'transparent',
     backgroundOpacity: 1,
-    borderColor: consts.boundaryColor,
+    borderColor: shapes.boundaryColor,
     borderOpacity: 1,
     borderStyle: 1,
     borderWidth: 1,
-    fontFamily: consts.fontFamily,
-    fontSize: consts.fontSize,
-    shapeType: consts.shapeTypeRectangle,
+    fontFamily: shapes.fontFamily,
+    fontSize: shapes.fontSize,
+    shapeType: shapes.shapeTypeRectangle,
     textAlign: 'l',
     textAlignVertical: 'b',
-    textColor: consts.boundaryTextColor,
+    textColor: shapes.boundaryTextColor,
   }
 
   miro.board.widgets.create({
@@ -181,9 +166,9 @@ function drawBoundary(name, type, x, y, w, h) {
 }
 
 function drawDatabase(name, role, description, variableName, x, y, number) {
-  let text = consts.createText(name, role, description)
-  let shape = consts.newShape(consts.shapeTypeCylinder, text, consts.containerColor, consts.containerBorderColor,
-    consts.shapeTextColor, x, y, consts.containerWidth, consts.databaseHeight)
+  let text = shapes.createText(name, role, description)
+  let shape = shapes.newShape(shapes.shapeTypeCylinder, text, shapes.containerColor, shapes.containerBorderColor,
+    shapes.shapeTextColor, x, y, shapes.containerWidth, shapes.databaseHeight)
 
   miro.board.widgets.create(shape).then((result) => {
     let database = result[0]

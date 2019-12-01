@@ -37,6 +37,21 @@ export const containerType = 6
 export const componentType = 7
 export const databaseType = 8
 
+export const startText = `
+person1 = Person("name", "description");
+
+Boundary("name", "type") {
+soft1 = System("name", "description");
+soft2 = ExistingSystem("name", "description");
+container1 = Container("name", "description", "technology");
+component1 = Component("name", "description", "technology");
+}
+
+db = Database("name", "description", "technology");
+
+Rel(person1, soft1, "description", "technology");
+Rel(soft1, soft2, "description");`
+
 export function createText(name, role, description) {
   return `<p><strong style="color:rgb(255,255,255)">${name}</strong></p><p>[${role}]</p><p><br/></p><p>${description}</p>`
 }
@@ -110,13 +125,17 @@ export function createGraph(objects, x0, y0) {
   for (let i = 0; i < countObjects; i++) {
     edges[i] = []
     for (let j = 0; j < countObjects; j++) {
-      edges[i][j] = false
+      edges[i][j] = {
+        relation: false,
+        object: null
+      }
     }
   }
   // заполняем ее
   for (const element of objects) {
     if (element.object_type === relationshipType && objectsMap.hasOwnProperty(element.start) && objectsMap.hasOwnProperty(element.end)) {
-      edges[objectsMap[element.start]][objectsMap[element.end]] = true
+      edges[objectsMap[element.start]][objectsMap[element.end]].relation = true
+      edges[objectsMap[element.start]][objectsMap[element.end]].object = element
     }
   }
   // идем вглубину и расставляем уровни
@@ -196,7 +215,7 @@ function dfs(start, vertices, edges, level) {
   vertices[start].isVisited = true
   vertices[start].level = level
   for (let end = 0; end < edges[start].length; end++) {
-    if (edges[start][end]) {
+    if (edges[start][end].relation) {
       if (!vertices[end].isVisited) {
         vertices = dfs(end, vertices, edges, level + 1)
       } else if (vertices[end].isVisited && vertices[end].level > level) {
