@@ -8,7 +8,8 @@
   "private": true,
   "scripts": {
     "gen": "pegjs c4.pegjs",
-    "serve": "./node_modules/.bin/http-server -p 8081 & ./node_modules/.bin/ngrok http 8081"
+    "serve": "./node_modules/.bin/http-server -p 8080",
+    "ngrok": "./node_modules/.bin/ngrok http 8080"
   },
   "devDependencies": {
     "http-server": "^0.11.1",

@@ -10,6 +10,12 @@ let widgetsMap = {}
 
 function redraw() {
   cleanUp()
+  // подождем, пока все удалится
+  setTimeout(drawAll, 300)
+
+}
+
+function drawAll() {
   try {
     let objects = parse(editor.value)
     let graph = shapes.createGraph(objects, 0, 0)
@@ -18,7 +24,7 @@ function redraw() {
     if (graph.boundary !== null) {
       drawBoundary(graph.boundary.object.name, graph.boundary.object.type, graph.boundary.x, graph.boundary.y, graph.boundary.width, graph.boundary.height)
     }
-    setTimeout(drawRelationships, 1000, graph.edges)
+    setTimeout(drawRelationships, 700, graph.edges)
   } catch (e) {
     miro.showErrorNotification(e.message)
   }
