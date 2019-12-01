@@ -37,8 +37,7 @@ export const containerType = 6
 export const componentType = 7
 export const databaseType = 8
 
-export const startText = `
-person1 = Person("name", "description");
+export const startText = `person1 = Person("name", "description");
 
 Boundary("name", "type") {
 soft1 = System("name", "description");
