@@ -10,9 +10,7 @@ let widgetsMap = {}
 
 function redraw() {
   cleanUp()
-  // подождем, пока все удалится
   setTimeout(drawAll, 300)
-
 }
 
 function drawAll() {
@@ -24,7 +22,7 @@ function drawAll() {
     if (graph.boundary !== null) {
       drawBoundary(graph.boundary.object.name, graph.boundary.object.type, graph.boundary.x, graph.boundary.y, graph.boundary.width, graph.boundary.height)
     }
-    setTimeout(drawRelationships, 700, graph.edges)
+    setTimeout(drawRelationships, graph.vertices.length * 100, graph.edges)
   } catch (e) {
     miro.showErrorNotification(e.message)
   }
@@ -109,36 +107,41 @@ function drawContainer(name, role, description, variableName, x, y, number, isEx
 
 function drawRelationships(edges) {
   for (let i = 0; i < edges.length; i++) {
-    for (let j = 0; j < edges[i].length; j++) {
-      if (edges[i][j].relation) {
-        let startID = widgetsMap[i][0]
-        let endID = widgetsMap[j][0]
-        let text = edges[i][j].object.description
-        if (edges[i][j].object.technology !== null) {
-          text += `\n[${edges[i][j].object.technology}]`
+    setTimeout(function (i) {
+      for (let j = 0; j < edges[i].length; j++) {
+        if (edges[i][j].relation) {
+          let startID = widgetsMap[i][0]
+          let endID = widgetsMap[j][0]
+          let text = edges[i][j].object.description
+          if (edges[i][j].object.technology !== null) {
+            text += `\n[${edges[i][j].object.technology}]`
+          }
+          let line = {
+            endWidgetId: endID,
+            startWidgetId: startID,
+            // text: text,
+            style: {
+              lineColor: "#808080",
+              lineEndStyle: 1,
+              lineStartStyle: 0,
+              lineStyle: 1,
+              lineThickness: 1,
+              lineType: 0
+            },
+            type: "LINE"
+          }
+          setTimeout(miroCreateLine, (i + j) * 50, line)
         }
-        let line = {
-          endWidgetId: endID,
-          startWidgetId: startID,
-          // text: text,
-          style: {
-            lineColor: "#808080",
-            lineEndStyle: 1,
-            lineStartStyle: 0,
-            lineStyle: 1,
-            lineThickness: 1,
-            lineType: 0
-          },
-          type: "LINE"
-        }
-
-        miro.board.widgets.create(line).then((shape) => {
-          let relationship = shape[0]
-          widgetsMap[relationship.id] = [relationship.id]
-        })
       }
-    }
+    }, 100, i)
   }
+}
+
+function miroCreateLine(line) {
+  miro.board.widgets.create(line).then((shape) => {
+    let relationship = shape[0]
+    widgetsMap[relationship.id] = [relationship.id]
+  })
 }
 
 function drawBoundary(name, type, x, y, w, h) {
