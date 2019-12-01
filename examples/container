@@ -1,0 +1,22 @@
+per = Person("Personal Banking Customer", "A customer of the bank, with personal bank accounts.");
+
+Boundary("Internal Banking System", "Software System") {
+con1 = Container("Web application", "Delivers the static content and the Internet banking single page application.", "Java and Spring MVC");
+con2 = Container("Single-Page Application", "Provides all of the Internet banking functionality to customers via their web browser.", "JavaScript and Angular");
+con3 = Container("Mobile App", "Provides a limited subset of the Internet banking functionality to customers via their mobile device.", "Xamarin");
+con4 = Container("API Application", "Provides Internet banking functionality via a jSON/HTTPS API.", "Java and Spring MVC");
+con5 = Database("Database", "Stores user registration information, hashed authentication credentials, access logs, etc.", "Oracle Database Schema");
+}
+
+soft1 = ExistingSystem("Mainframe Banking System", "Stores all of the core banking information about customers, accounts, transactions, etc.");
+soft2 = ExistingSystem("Email System", "The internal Microsoft Exchange e-mail system.");
+
+Rel(per, con1, "Visits bigbank.com using", "https");
+Rel(per, con2, "Views account balances, and makes payments using");
+Rel(per, con3, "Views account balances, and makes payments using");
+Rel(con2, con4, "Makes API calls to", "json/http");
+Rel(con3, con4, "Makes API calls to", "json/http");
+Rel(con4, con5, "Read from and writes to", "JDBC");
+Rel(con4, soft1, "Makes API calls to", "xml/https");
+Rel(con4, soft2, "Sends e-mail using", "smtp");
+Rel(soft2, per, " Sends e-mail to");
