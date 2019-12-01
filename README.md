@@ -1,4 +1,6 @@
-# Getting Started
+# C4-Miro
+
+## Get started
 Install dependencies: `yarn`
 
 Generate parser `yarn gen`
